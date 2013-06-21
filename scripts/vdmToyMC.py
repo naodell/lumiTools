@@ -76,16 +76,16 @@ if beamType == 'SG':
     f2_Beam2.SetParameter('xFactor', 0.)
 
 
-#f2_DoubleGaus = r.TF2('DoubleGauss', '[8]*exp(-(x-[4])**2/(2*[0]**2) - (y-[6])**2/(2*[2]**2)) \
-#                                        + (1-[8])*exp(-(x-[5])**2/(2*([1]*[0])**2) - (y-[7])**2/(2*([3]*[2])**2))') 
-
-f2_DoubleGaus = r.TF2('DoubleGauss', '[8]*exp(-(x-[4])**2/(2*([0]*[1]/(1+[8]*([1]-1)))**2) - (y-[6])**2/(2*([2]*[3]/(1+[8]*([3]-1)))**2)) \
-                                        + (1 - [8])*exp(-(x-[5])**2/(2*([0]/(1+[8]*([1]-1)))**2) - (y-[7])**2/(2*([2]/(1+[8]*([3]-1)))**2))')
+f2_DoubleGaus = r.TF2('DoubleGauss', '[8]*exp(-(x-[4])**2/(2*([0]*[1]/(1+[8]*([1]-1)))**2) \
+                                        - (y-[6])**2/(2*([2]*[3]/(1+[8]*([3]-1)))**2)) \
+                                        + (1 - [8])*exp(-(x-[5])**2/(2*([0]/(1+[8]*([1]-1)))**2) \
+                                        - (y-[7])**2/(2*([2]/(1+[8]*([3]-1)))**2))')
 
 if beamType == 'DG':
 
     f2_Beam1 = r.TF2('f2_Beam1', 'DoubleGauss')
-    f2_Beam1.SetParNames('#Sigma_{x}', 'sigma_{1,x}/sigma{2,x}', '#Sigma_{y}', 'sigma_{1,y}/sigma{2,y}', 'x_{1}', 'x_{2}', 'y_{1}', 'y_{2}', 'Fraction')
+    f2_Beam1.SetParNames('#Sigma_{x}', 'sigma_{1,x}/sigma{2,x}', '#Sigma_{y}', 'sigma_{1,y}/sigma{2,y}',\
+                         'x_{1}', 'x_{2}', 'y_{1}', 'y_{2}', 'Fraction')
 
     f2_Beam1.SetParameter('#Sigma_{x}', 0.07)
     f2_Beam1.SetParameter('sigma_{1,x}/sigma{2,x}', 0.5)
@@ -99,7 +99,8 @@ if beamType == 'DG':
     f2_Beam1.SetParameter('Fraction', 0.7)
 
     f2_Beam2 = r.TF2('f2_Beam2', 'DoubleGauss')
-    f2_Beam2.SetParNames('#Sigma_{x}', 'sigma_{1,x}/sigma{2,x}', '#Sigma_{y}', 'sigma_{1,y}/sigma{2,y}', 'x_{1}', 'x_{2}', 'y_{1}', 'y_{2}', 'Fraction')
+    f2_Beam2.SetParNames('#Sigma_{x}', 'sigma_{1,x}/sigma{2,x}', '#Sigma_{y}', 'sigma_{1,y}/sigma{2,y}', \
+                         'x_{1}', 'x_{2}', 'y_{1}', 'y_{2}', 'Fraction')
 
     f2_Beam2.SetParameter('#Sigma_{x}', 0.05)
     f2_Beam2.SetParameter('sigma_{1,x}/sigma{2,x}', 0.6)
@@ -166,9 +167,6 @@ if beamType == 'SG':
     sigma['X'] = sigX[0]
     sigma['Y'] = sigY[0]
 
-    #sigma['X'] = (sigX[0]*sigX[1]/math.sqrt(pow(sigX[0], 2) + pow(sigX[1], 2)))
-    #sigma['Y'] = (sigY[0]*sigY[1]/math.sqrt(pow(sigY[0], 2) + pow(sigY[1], 2)))
-
 
 ### Carry out simulation
 print '\nStarting VdM simulation with {0} throws per scan point'.format(nToys)
@@ -230,7 +228,9 @@ if do2D and 'singleGaussian' in fitTypes:
 
     canvas.Print(plotPath + '/scanPoints_2D_{0}.pdf'.format(paramSuffix))
 
-    fitResult2D = t.Fit2D(graph2D.Clone(), fitGraphs['X'], fitGraphs['Y'], False, 'SIM', fitResult['X']['singleGaussian'], fitResult['Y']['singleGaussian'], '{0}/fits/fit2D_{1}_{2}'.format(plotPath, '', paramSuffix))
+    fitResult2D = t.Fit2D(graph2D.Clone(), fitGraphs['X'], fitGraphs['Y'], False, 'SIM', \
+                          fitResult['X']['singleGaussian'], fitResult['Y']['singleGaussian'], \
+                          '{0}/fits/fit2D_{1}_{2}'.format(plotPath, '', paramSuffix))
 
     #graph2D.Clear()
 
