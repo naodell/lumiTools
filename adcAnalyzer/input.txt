@@ -1,0 +1,5 @@
+/mnt/raid/bcm1f_data/ADC/Fill2536/data_2012-04-20_05-03-08_Fri.root
+/mnt/raid/bcm1f_data/ADC/Fill2536/data_2012-04-20_06-03-03_Fri.root
+/mnt/raid/bcm1f_data/ADC/Fill2536/data_2012-04-20_07-03-06_Fri.root
+/mnt/raid/bcm1f_data/ADC/Fill2536/data_2012-04-20_08-03-04_Fri.root
+/mnt/raid/bcm1f_data/ADC/Fill2536/data_2012-04-20_09-03-03_Fri.root
