@@ -262,7 +262,11 @@ class SimTools():
 
             g_truth     = r.TGraph(self._nScanPoints, array('f', scanPoints), array('f', truth[plane]))
             set_graph_style(g_truth, 'VDM Simulation;#Delta {0};#mu'.format(plane), r.kBlack, 1, 20, 0.8)
-            g_truth.Fit('f_truth')
+
+
+            for j in range(5):
+                fitRes = g_truth.Fit('f_truth','SQ')
+                if fitRes.CovMatrixStatus() == 3 and fitRes.Chi2()/fitRes.Ndf() < 2: break
 
             sigmaTruth = f_truth.GetParameter('Sigma')*1000. 
 
