@@ -129,12 +129,12 @@ class SimTools():
                 h2_Overlap.Multiply(h2_Beam1, h2_Beam2)
 
                 h2_Overlap.SetMaximum(5*nToys)
-                h2_Beam1.Draw('HIST')
+                h2_Overlap.Draw('COLZ')
+                h2_Beam1.Draw('HIST SAME')
                 h2_Beam2.Draw('HIST SAME')
-                h2_Overlap.Draw('COLZ SAME')
 
                 #self._canvas.Print(self._plotPath + '/vdmScan_MC_' + plane + '.pdf')
-                #self._canvas.Print(self._plotPath + '/vdmScan_MC_' + plane + '.gif+10')
+                self._canvas.Print(self._plotPath + '/vdmScan_MC_' + plane + '.gif+10')
 
                 # Normalize overlap histogram to represent 
                 # probability given by overlap of beam shapes
@@ -313,7 +313,6 @@ class SimTools():
             textBox.SetTextSize(0.05)
             for fitType in fitTypes:
                 textBox.AddText('#color[{0}]{{#Delta#Sigma/#Sigma_{{truth}} = {1:.3f}}}'.format(g_fit[fitType].GetLineColor(), abs(sigmaTruth-f_fit[plane][fitType][0])/sigmaTruth))
-                print f_fit[plane][fitType][0], plane, fitType
 
             
             # Set up canvas for displaying inputs and bias metrics

@@ -232,8 +232,8 @@ if do2D and 'doubleGaussian' in fitTypes:
                           fitResult['X']['doubleGaussian'], fitResult['Y']['doubleGaussian'], \
                           '{0}/fits/fit2D_{2}'.format(plotPath, '', paramSuffix))
 
-    fitResult['X']['2D'] = [fitResult2D[0][0]*1000, fitResult2D[4]]
-    fitResult['Y']['2D'] = [fitResult2D[0][2]*1000, fitResult2D[4]]
+    fitResult['X']['2D'] = [fitResult2D[0][0]*1000, fitResult2D[2]]
+    fitResult['Y']['2D'] = [fitResult2D[0][2]*1000, fitResult2D[3]]
 
     #graph2D.Clear()
 
@@ -243,5 +243,5 @@ if os.listdir('{0}/fits'.format(plotPath)):
     for fitType in fitTypes:
             subprocess.call('pdftk {0}/fits/fit1D*{1}*.pdf output {0}/fit1D_{1}.pdf'.format(plotPath, fitType), shell = True)
 
-#    if do2D and 'doubleGaussian' in fitTypes:
-#        subprocess.call('pdftk {0}/fits/fit2D*.pdf output {0}/fit2D_{1}.pdf'.format(plotPath, paramSuffix), shell = True)
+    if do2D and 'doubleGaussian' in fitTypes:
+        subprocess.call('pdftk {0}/fits/fit2D*.pdf output {0}/fit2D_{1}.pdf'.format(plotPath, paramSuffix), shell = True)
