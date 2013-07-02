@@ -3,7 +3,7 @@ from array import array
 import lumiTools as l
 import ROOT as r
 
-graphStyles = {'singleGaussian':[r.kRed, 23], 'doubleGaussian':[r.kCyan+2, 22], 'skewGaussian':[r.kGreen-2, 24]}
+graphStyles = {'singleGaussian':[r.kRed, 23], 'doubleGaussian':[r.kCyan+2, 22], 'skewGaussian':[r.kGreen-2, 24], '2D':[r.kViolet, 25]}
 
 def get_current_time():
     ''' 
@@ -242,6 +242,13 @@ class SimTools():
                     biasFits[fitType].append((truth[plane][i] - fitRate)/truth[plane][i])
                     fitRates[fitType].append(fitRate)
 
+            # Make graph from generated scan points (truth)
+            g_truth     = r.TGraph(self._nScanPoints, array('f', scanPoints), array('f', truth[plane]))
+            sigmaTrue   = g_truth.GetRMS()*0.5
+            peakTrue    = g_truth.GetHistogram().GetMaximum()
+            meanTrue    = g_truth.GetHistogram().GetMean()
+            set_graph_style(g_truth, 'VDM Simulation;#Delta {0};#mu'.format(plane), r.kBlack, 1, 20, 0.8)
+
             # Get width of truth
             r.gStyle.SetOptFit(0)
 
@@ -251,25 +258,27 @@ class SimTools():
             elif self._beamType == 'DG':
                 f_truth = r.TF1('f_truth','[2]*([3]*exp(-(x-[4])**2/(2*([0]*[1]/([3]*[1]+1-[3]))**2)) + (1-[3])*exp(-(x-[4])**2/(2*([0]/([3]*[1]+1-[3]))**2)))')
 
-                f_truth.SetParNames('Sigma','sigma_{1}/sigma_{2}','Amplitude','Fraction','Mean')
+                f_truth.SetParNames('#Sigma','#sigma_{1}/#sigma_{2}','Amplitude','Fraction','#mu')
+
                 f_truth.SetParameter(0, 0.5)
                 f_truth.SetParameter(1, 0.5)
-                f_truth.SetParameter('Amplitude', 0.001)
-                f_truth.SetParameter('Fraction', 0.7)
-                f_truth.FixParameter(4, 0.)
+                f_truth.SetParameter(2, 0.001)
+                f_truth.SetParameter(3, 0.7)
 
-            f_truth.SetLineColor(r.kBlack)
+                f_truth.SetParLimits(0,0.5*sigmaTrue,2*sigmaTrue)
+                f_truth.SetParLimits(1,0.1,10)
+                f_truth.SetParLimits(2,0.95*peakTrue,1.05*peakTrue)
+                f_truth.SetParLimits(3,0.,0.5)
 
-            g_truth     = r.TGraph(self._nScanPoints, array('f', scanPoints), array('f', truth[plane]))
-            set_graph_style(g_truth, 'VDM Simulation;#Delta {0};#mu'.format(plane), r.kBlack, 1, 20, 0.8)
-            g_truth.Fit('f_truth')
+                f_truth.FixParameter(4, meanTrue)
 
-            sigmaTruth = f_truth.GetParameter('Sigma')*1000. 
+            #g_truth.Fit('f_truth')
 
-            #print f_truth.GetParameter('Sigma')*1000., f_fit[plane]['singleGaussian'][0]
+            sigmaTruth = sigmaTrue*1000 #f_truth.GetParameter('#Sigma')*1000. 
 
             # Prepare graphs
-            g_rates     = r.TGraphErrors(self._nScanPoints, array('f', scanPoints), array('f', simRates[0][plane]), array('f', [0.01 for i in range(self._nScanPoints)]), array('f', simRates[1][plane]))
+            g_rates     = r.TGraphErrors(self._nScanPoints, array('f', scanPoints), array('f', simRates[0][plane]), \
+                                         array('f', [0.01 for i in range(self._nScanPoints)]), array('f', simRates[1][plane]))
             g_biasRates = r.TGraph(self._nScanPoints, array('f', scanPoints), array('f', biasRates))
 
             set_graph_style(g_rates, 'VDM Simulation;#Delta {0};#mu'.format(plane), r.kBlue, 1, 21, 0.8)
@@ -289,8 +298,8 @@ class SimTools():
             legend.SetFillColor(0)
             legend.SetTextSize(0.045)
 
-            #legend.AddEntry(g_truth, 'MC truth ({0})'.format(self._beamType))
-            legend.AddEntry(f_truth, 'MC truth ({0})'.format(self._beamType))
+            legend.AddEntry(g_truth, 'MC truth ({0})'.format(self._beamType))
+            #legend.AddEntry(f_truth, 'MC truth ({0})'.format(self._beamType))
             legend.AddEntry(g_rates, 'Simulated rates')
             for fitType in fitTypes:
                 legend.AddEntry(g_fit[fitType], '{0} fit'.format(fitType))
@@ -304,6 +313,7 @@ class SimTools():
             textBox.SetTextSize(0.05)
             for fitType in fitTypes:
                 textBox.AddText('#color[{0}]{{#Delta#Sigma/#Sigma_{{truth}} = {1:.3f}}}'.format(g_fit[fitType].GetLineColor(), abs(sigmaTruth-f_fit[plane][fitType][0])/sigmaTruth))
+                print f_fit[plane][fitType][0], plane, fitType
 
             
             # Set up canvas for displaying inputs and bias metrics
@@ -322,9 +332,11 @@ class SimTools():
             pad1.cd()
 
             g_truth.SetMinimum(-0.00005)
+            g_truth.GetYaxis().SetTitleSize(0.06)
+            g_truth.GetYaxis().SetTitleOffset(0.448)
 
-            g_truth.Draw('AP')
-            f_truth.Draw('SAME')
+            g_truth.Draw('ACP')
+            #f_truth.Draw('SAME')
             g_rates.Draw('CP SAME')
             for fitType in fitTypes:
                 g_fit[fitType].Draw('CP SAME')
@@ -370,8 +382,11 @@ class SimTools():
         pad1.SetGridy()
         pad2.SetGridy()
 
-        g_bsX = l.make_graph([array('f', scanPoints[0]), array('f', scanPoints[1])], [array('f', beamspot[0]['X']), array('f', beamspot[1]['X'])], 'VdM scan ' + plane + ' beamspot sim;; #color[4]{X}/#color[2]{Y} (a.u.)', 22, r.kBlue)
-        g_bsY = l.make_graph([array('f', scanPoints[0]), array('f', scanPoints[1])], [array('f', beamspot[0]['Y']), array('f', beamspot[1]['Y'])], 'VdM scan ' + plane + ' beamspot sim;; Y (a.u.)', 21, r.kRed)
+        g_bsX = l.make_graph([array('f', scanPoints[0]), array('f', scanPoints[1])], [array('f', beamspot[0]['X']), array('f', beamspot[1]['X'])],\
+                                    'VdM scan ' + plane + ' beamspot sim;; #color[4]{X}/#color[2]{Y} (a.u.)', 22, r.kBlue)
+        g_bsY = l.make_graph([array('f', scanPoints[0]), array('f', scanPoints[1])], [array('f', beamspot[0]['Y']), array('f', beamspot[1]['Y'])],\
+                                    'VdM scan ' + plane + ' beamspot sim;; Y (a.u.)', 21, r.kRed)
+
         g_beamWidthX = l.make_graph(array('f', scanPoints[0]), array('f', beamWidth['X']), ';#Delta' + plane + ' (a.u.); RMS_{#color[4]{BSX}/#color[2]{BSY}} (a.u.)', 22, r.kBlue, doErrors = False)
         g_beamWidthY = l.make_graph(array('f', scanPoints[0]), array('f', beamWidth['Y']), ';#Delta' + plane + ' (a.u.); RMS_{BS} (a.u.)', 21, r.kRed, doErrors = False)
 
