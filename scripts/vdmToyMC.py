@@ -17,12 +17,13 @@ feed to the vdmCalibrator.
 
 
 # Configuration
-beamType    = 'DG'
+beamType    = 'SG'
 fitTypes    = ['singleGaussian', 'doubleGaussian']#, 'skewGaussian']
 do2D        = True
 nToys       = int(1e4)
 nSPs        = 25
-scanPoints  = [0.20 + 0.025*i for i in range(nSPs)]
+scanRange   = (0.25, 0.75) # Should be withing [0, 1]
+scanPoints  = [scanRange[0] + (scanRange[1] - scanRange[0])*i/float(nSPs) for i in range(nSPs)]
 
 paramSuffix = 'TEST' #sim.get_current_time()
 plotPath    = 'plots/' + beamType
@@ -62,17 +63,17 @@ if beamType == 'SG':
     # to well within this range.
 
     f2_Beam1.SetParameter('x_{0}', 0.5)
-    f2_Beam1.SetParameter('y_{0}', 0.49)
-    f2_Beam1.SetParameter('#sigma_{x}', 0.07)
+    f2_Beam1.SetParameter('y_{0}', 0.499)
+    f2_Beam1.SetParameter('#sigma_{x}', 0.088)
     f2_Beam1.SetParameter('#sigma_{xy}', 0.1)
-    f2_Beam1.SetParameter('#sigma_{y}', 0.05)
+    f2_Beam1.SetParameter('#sigma_{y}', 0.075)
     f2_Beam1.SetParameter('xFactor', -0.)
 
     f2_Beam2.SetParameter('x_{0}', 0.5)
-    f2_Beam2.SetParameter('y_{0}', 0.51)
-    f2_Beam2.SetParameter('#sigma_{x}', 0.05)
+    f2_Beam2.SetParameter('y_{0}', 0.501)
+    f2_Beam2.SetParameter('#sigma_{x}', 0.084)
     f2_Beam2.SetParameter('#sigma_{xy}', 0.06)
-    f2_Beam2.SetParameter('#sigma_{y}', 0.05)
+    f2_Beam2.SetParameter('#sigma_{y}', 0.075)
     f2_Beam2.SetParameter('xFactor', 0.)
 
 
