@@ -22,7 +22,7 @@ fitTypes    = ['singleGaussian', 'doubleGaussian']#, 'skewGaussian']
 do2D        = True
 nToys       = int(1e4)
 nSPs        = 25
-scanRange   = (0.25, 0.75) # Should be withing [0, 1]
+scanRange   = (0.1, 0.9) # Should be within [0, 1]
 scanPoints  = [scanRange[0] + (scanRange[1] - scanRange[0])*i/float(nSPs) for i in range(nSPs)]
 
 paramSuffix = 'TEST' #sim.get_current_time()
@@ -62,19 +62,21 @@ if beamType == 'SG':
     # to contain the beams (or at least, the overlap)
     # to well within this range.
 
-    f2_Beam1.SetParameter('x_{0}', 0.5)
-    f2_Beam1.SetParameter('y_{0}', 0.499)
-    f2_Beam1.SetParameter('#sigma_{x}', 0.088)
+    f2_Beam1.SetParameter('#sigma_{x}', 0.048)
     f2_Beam1.SetParameter('#sigma_{xy}', 0.1)
     f2_Beam1.SetParameter('#sigma_{y}', 0.075)
     f2_Beam1.SetParameter('xFactor', -0.)
 
-    f2_Beam2.SetParameter('x_{0}', 0.5)
-    f2_Beam2.SetParameter('y_{0}', 0.501)
-    f2_Beam2.SetParameter('#sigma_{x}', 0.084)
+    f2_Beam1.SetParameter('x_{0}', 0.5)
+    f2_Beam1.SetParameter('y_{0}', 0.499)
+
+    f2_Beam2.SetParameter('#sigma_{x}', 0.044)
     f2_Beam2.SetParameter('#sigma_{xy}', 0.06)
     f2_Beam2.SetParameter('#sigma_{y}', 0.075)
     f2_Beam2.SetParameter('xFactor', 0.)
+
+    f2_Beam2.SetParameter('x_{0}', 0.5)
+    f2_Beam2.SetParameter('y_{0}', 0.501)
 
 
 f2_DoubleGaus = r.TF2('DoubleGauss', '[8]*exp(-(x-[4])**2/(2*([0]*[1]/(1+[8]*([1]-1)))**2) \
@@ -89,9 +91,9 @@ if beamType == 'DG':
                          'x_{1}', 'x_{2}', 'y_{1}', 'y_{2}', 'Fraction')
 
     f2_Beam1.SetParameter('#Sigma_{x}', 0.07)
-    f2_Beam1.SetParameter('#sigma_{1,x}/#sigma{2,x}', 0.5)
+    f2_Beam1.SetParameter('#sigma_{1,x}/#sigma{2,x}', 0.7)
     f2_Beam1.SetParameter('#Sigma_{y}', 0.07)
-    f2_Beam1.SetParameter('#sigma_{1,y}/#sigma{2,y}', 0.5)
+    f2_Beam1.SetParameter('#sigma_{1,y}/#sigma{2,y}', 0.3)
 
     f2_Beam1.SetParameter('x_{1}', 0.5)
     f2_Beam1.SetParameter('x_{2}', 0.5)
@@ -103,10 +105,10 @@ if beamType == 'DG':
     f2_Beam2.SetParNames('#Sigma_{x}', '#sigma_{1,x}/#sigma{2,x}', '#Sigma_{y}', '#sigma_{1,y}/#sigma{2,y}', \
                          'x_{1}', 'x_{2}', 'y_{1}', 'y_{2}', 'Fraction')
 
-    f2_Beam2.SetParameter('#Sigma_{x}', 0.05)
-    f2_Beam2.SetParameter('#sigma_{1,x}/#sigma{2,x}', 0.6)
-    f2_Beam2.SetParameter('#Sigma_{y}', 0.05)
-    f2_Beam2.SetParameter('#sigma_{1,y}/#sigma{2,y}', 0.6)
+    f2_Beam2.SetParameter('#Sigma_{x}', 0.08)
+    f2_Beam2.SetParameter('#sigma_{1,x}/#sigma{2,x}', 0.75)
+    f2_Beam2.SetParameter('#Sigma_{y}', 0.08)
+    f2_Beam2.SetParameter('#sigma_{1,y}/#sigma{2,y}', 0.65)
 
     f2_Beam2.SetParameter('x_{1}', 0.5)
     f2_Beam2.SetParameter('x_{2}', 0.5)
@@ -129,6 +131,7 @@ if beamType == 'DGX':
     f2_Beam1.SetParameter('S_{y}', 0.5)
     f2_Beam1.SetParameter('#sigma_{xy}', 0.05)
     f2_Beam1.SetParameter('S_{xy}', 1.)
+
     f2_Beam1.SetParameter('x_{1}', 0.5)
     f2_Beam1.SetParameter('x_{2}', 0.5)
     f2_Beam1.SetParameter('y_{1}', 0.5)
@@ -145,6 +148,7 @@ if beamType == 'DGX':
     f2_Beam2.SetParameter('S_{y}', 0.5)
     f2_Beam2.SetParameter('#sigma_{xy}', 0.05)
     f2_Beam2.SetParameter('S_{xy}', 1.)
+
     f2_Beam2.SetParameter('x_{1}', 0.5)
     f2_Beam2.SetParameter('x_{2}', 0.5)
     f2_Beam2.SetParameter('y_{1}', 0.5)
@@ -172,7 +176,7 @@ if beamType == 'SG':
 ### Carry out simulation
 print '\nStarting VdM simulation with {0} throws per scan point'.format(nToys)
 simulator = sim.SimTools(beamType, scanPoints, canvas, plotPath, paramSuffix)
-rates, sigRates, sigDelta, beamSpot, sigBeamSpot, beamWidth = simulator.single_scan_simulator(f2_Beam1, f2_Beam2, nToys)
+rates, sigRates, sigDelta, beamSpot, sigBeamSpot, beamWidth, sigBeamWidth = simulator.single_scan_simulator(f2_Beam1, f2_Beam2, nToys)
 print 'Scan finished!\n'
 
 
@@ -214,7 +218,7 @@ for plane in ['X', 'Y']:
     g_fit.Clear()
     canvas.Clear()
 
-    simulator.draw_beamspot_plots([[x - offset for x in scanPoints], sigDelta[plane]], [beamSpot[plane], sigBeamSpot[plane]], beamWidth[plane], plane)
+    simulator.draw_beamspot_plots([[x - offset for x in scanPoints], sigDelta[plane]], [beamSpot[plane], sigBeamSpot[plane]], [beamWidth[plane], sigBeamWidth[plane]], plane)
     
 # Do 2D VDM fit
 if do2D and 'doubleGaussian' in fitTypes:

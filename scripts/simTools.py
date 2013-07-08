@@ -62,12 +62,14 @@ class SimTools():
         h2_Overlap.SetLineColor(r.kViolet)
 
         # Outputs for fits
-        rates       = {'X':[], 'Y':[]}
-        sigRates    = {'X':[], 'Y':[]}
-        sigDelta    = {'X':[], 'Y':[]}
-        beamWidth   = {'X':{'X':[], 'Y':[]}, 'Y':{'X':[], 'Y':[]}}
-        beamSpot    = {'X':{'X':[], 'Y':[]}, 'Y':{'X':[], 'Y':[]}}
-        sigBeamSpot = {'X':{'X':[], 'Y':[]}, 'Y':{'X':[], 'Y':[]}}
+        rates           = {'X':[], 'Y':[]}
+        sigRates        = {'X':[], 'Y':[]}
+        sigDelta        = {'X':[], 'Y':[]}
+
+        beamWidth       = {'X':{'X':[], 'Y':[]}, 'Y':{'X':[], 'Y':[]}}
+        sigBeamWidth    = {'X':{'X':[], 'Y':[]}, 'Y':{'X':[], 'Y':[]}}
+        beamSpot        = {'X':{'X':[], 'Y':[]}, 'Y':{'X':[], 'Y':[]}}
+        sigBeamSpot     = {'X':{'X':[], 'Y':[]}, 'Y':{'X':[], 'Y':[]}}
 
         for plane in ['X', 'Y']:
 
@@ -152,8 +154,11 @@ class SimTools():
                 sigDelta[plane].append(0.01)
 
                 # beamspot! 
-                beamWidth[plane]['X'].append(h2_Overlap.ProjectionX().GetRMS())
-                beamWidth[plane]['Y'].append(h2_Overlap.ProjectionY().GetRMS())
+                beamWidth[plane]['X'].append(h2_Overlap.GetRMS(1))
+                beamWidth[plane]['Y'].append(h2_Overlap.GetRMS(2))
+                sigBeamWidth[plane]['X'].append(h2_Overlap.GetRMSError(1))
+                sigBeamWidth[plane]['Y'].append(h2_Overlap.GetRMSError(2))
+
                 beamSpot[plane]['X'].append(beamspot[0])
                 beamSpot[plane]['Y'].append(beamspot[1])
                 sigBeamSpot[plane]['X'].append(h2_Overlap.GetRMS(1))
@@ -167,7 +172,7 @@ class SimTools():
 
         self._canvas.SetLogz(0)
 
-        return rates, sigRates, sigDelta, beamSpot, sigBeamSpot, beamWidth
+        return rates, sigRates, sigDelta, beamSpot, sigBeamSpot, beamWidth, sigBeamWidth
 
     def get_vdm_truth(self, f2_Beam1, f2_Beam2):
 
@@ -386,8 +391,10 @@ class SimTools():
         g_bsY = l.make_graph([array('f', scanPoints[0]), array('f', scanPoints[1])], [array('f', beamspot[0]['Y']), array('f', beamspot[1]['Y'])],\
                                     'VdM scan ' + plane + ' beamspot sim;; Y (a.u.)', 21, r.kRed)
 
-        g_beamWidthX = l.make_graph(array('f', scanPoints[0]), array('f', beamWidth['X']), ';#Delta' + plane + ' (a.u.); RMS_{#color[4]{BSX}/#color[2]{BSY}} (a.u.)', 22, r.kBlue, doErrors = False)
-        g_beamWidthY = l.make_graph(array('f', scanPoints[0]), array('f', beamWidth['Y']), ';#Delta' + plane + ' (a.u.); RMS_{BS} (a.u.)', 21, r.kRed, doErrors = False)
+        g_beamWidthX = l.make_graph([array('f', scanPoints[0]), array('f', scanPoints[1])], [array('f', beamWidth[0]['X']), array('f', beamWidth[1]['X'])],\
+                                    ';#Delta' + plane + ' (a.u.); RMS_{#color[4]{RMS_{X}}/#color[2]{RMS_{Y}}} (a.u.)', 22, r.kBlue, doErrors = True)
+        g_beamWidthY = l.make_graph([array('f', scanPoints[0]), array('f', scanPoints[1])], [array('f', beamWidth[0]['Y']), array('f', beamWidth[1]['Y'])],\
+                                    ';#Delta' + plane + ' (a.u.); Y (a.u.)', 21, r.kBlue, doErrors = True)
 
         pad1.cd()
         g_bsX.SetMaximum(1.1*max(beamspot[0]['X']+beamspot[0]['Y']))
@@ -398,8 +405,8 @@ class SimTools():
         g_bsY.Draw('P SAME')
 
         pad2.cd()
-        g_beamWidthX.SetMaximum(1.1*max(beamWidth['X']+beamWidth['Y']))
-        g_beamWidthX.SetMinimum(0.8*min(beamWidth['X']+beamWidth['Y']))
+        g_beamWidthX.SetMaximum(1.1*max(beamWidth[0]['X']+beamWidth[0]['Y']))
+        g_beamWidthX.SetMinimum(0.8*min(beamWidth[0]['X']+beamWidth[0]['Y']))
         g_beamWidthX.GetYaxis().CenterTitle()
 
         g_beamWidthX.Draw('ACP')

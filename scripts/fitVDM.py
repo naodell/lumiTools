@@ -6,18 +6,22 @@ def Residuals(g,f):
 
         res=r.TGraphErrors()
        
-        n=g.GetN()
-        x=g.GetX() 
-        y=g.GetY()
-        xe=g.GetEX()
-        ye=g.GetEY()
+        n   = g.GetN()
+        x   = g.GetX() 
+        y   = g.GetY()
+        xe  = g.GetEX()
+        ye  = g.GetEY()
 
         for i in range(n):
-                val = f.Eval(x[i])
-                dev = (y[i]-val)/ye[i]
 
-                res.SetPoint(i,x[i],dev)
-                res.SetPointError(i, 0., 0.)
+            if ye[i] == 0:
+                continue
+            
+            val = f.Eval(x[i])
+            dev = (y[i]-val)/ye[i]
+
+            res.SetPoint(i,x[i],dev)
+            res.SetPointError(i, 0., 0.)
 
         return res
 
