@@ -17,12 +17,13 @@ feed to the vdmCalibrator.
 
 
 # Configuration
-beamType    = 'DG'
+beamType    = 'SG'
 fitTypes    = ['singleGaussian', 'doubleGaussian']#, 'skewGaussian']
 do2D        = True
 nToys       = int(1e4)
 nSPs        = 25
-scanPoints  = [0.20 + 0.025*i for i in range(nSPs)]
+scanRange   = (0.1, 0.9) # Should be within [0, 1]
+scanPoints  = [scanRange[0] + (scanRange[1] - scanRange[0])*i/float(nSPs) for i in range(nSPs)]
 
 paramSuffix = 'TEST' #sim.get_current_time()
 plotPath    = 'plots/' + beamType
@@ -61,19 +62,21 @@ if beamType == 'SG':
     # to contain the beams (or at least, the overlap)
     # to well within this range.
 
-    f2_Beam1.SetParameter('x_{0}', 0.5)
-    f2_Beam1.SetParameter('y_{0}', 0.49)
-    f2_Beam1.SetParameter('#sigma_{x}', 0.07)
+    f2_Beam1.SetParameter('#sigma_{x}', 0.048)
     f2_Beam1.SetParameter('#sigma_{xy}', 0.1)
-    f2_Beam1.SetParameter('#sigma_{y}', 0.05)
+    f2_Beam1.SetParameter('#sigma_{y}', 0.075)
     f2_Beam1.SetParameter('xFactor', -0.)
 
-    f2_Beam2.SetParameter('x_{0}', 0.5)
-    f2_Beam2.SetParameter('y_{0}', 0.51)
-    f2_Beam2.SetParameter('#sigma_{x}', 0.05)
+    f2_Beam1.SetParameter('x_{0}', 0.5)
+    f2_Beam1.SetParameter('y_{0}', 0.499)
+
+    f2_Beam2.SetParameter('#sigma_{x}', 0.044)
     f2_Beam2.SetParameter('#sigma_{xy}', 0.06)
-    f2_Beam2.SetParameter('#sigma_{y}', 0.05)
+    f2_Beam2.SetParameter('#sigma_{y}', 0.075)
     f2_Beam2.SetParameter('xFactor', 0.)
+
+    f2_Beam2.SetParameter('x_{0}', 0.5)
+    f2_Beam2.SetParameter('y_{0}', 0.501)
 
 
 f2_DoubleGaus = r.TF2('DoubleGauss', '[8]*exp(-(x-[4])**2/(2*([0]*[1]/(1+[8]*([1]-1)))**2) \
@@ -84,13 +87,13 @@ f2_DoubleGaus = r.TF2('DoubleGauss', '[8]*exp(-(x-[4])**2/(2*([0]*[1]/(1+[8]*([1
 if beamType == 'DG':
 
     f2_Beam1 = r.TF2('f2_Beam1', 'DoubleGauss')
-    f2_Beam1.SetParNames('#Sigma_{x}', 'sigma_{1,x}/sigma{2,x}', '#Sigma_{y}', 'sigma_{1,y}/sigma{2,y}',\
+    f2_Beam1.SetParNames('#Sigma_{x}', '#sigma_{1,x}/#sigma{2,x}', '#Sigma_{y}', '#sigma_{1,y}/#sigma{2,y}',\
                          'x_{1}', 'x_{2}', 'y_{1}', 'y_{2}', 'Fraction')
 
     f2_Beam1.SetParameter('#Sigma_{x}', 0.07)
-    f2_Beam1.SetParameter('sigma_{1,x}/sigma{2,x}', 0.5)
+    f2_Beam1.SetParameter('#sigma_{1,x}/#sigma{2,x}', 0.7)
     f2_Beam1.SetParameter('#Sigma_{y}', 0.07)
-    f2_Beam1.SetParameter('sigma_{1,y}/sigma{2,y}', 0.5)
+    f2_Beam1.SetParameter('#sigma_{1,y}/#sigma{2,y}', 0.3)
 
     f2_Beam1.SetParameter('x_{1}', 0.5)
     f2_Beam1.SetParameter('x_{2}', 0.5)
@@ -99,13 +102,13 @@ if beamType == 'DG':
     f2_Beam1.SetParameter('Fraction', 0.7)
 
     f2_Beam2 = r.TF2('f2_Beam2', 'DoubleGauss')
-    f2_Beam2.SetParNames('#Sigma_{x}', 'sigma_{1,x}/sigma{2,x}', '#Sigma_{y}', 'sigma_{1,y}/sigma{2,y}', \
+    f2_Beam2.SetParNames('#Sigma_{x}', '#sigma_{1,x}/#sigma{2,x}', '#Sigma_{y}', '#sigma_{1,y}/#sigma{2,y}', \
                          'x_{1}', 'x_{2}', 'y_{1}', 'y_{2}', 'Fraction')
 
-    f2_Beam2.SetParameter('#Sigma_{x}', 0.05)
-    f2_Beam2.SetParameter('sigma_{1,x}/sigma{2,x}', 0.6)
-    f2_Beam2.SetParameter('#Sigma_{y}', 0.05)
-    f2_Beam2.SetParameter('sigma_{1,y}/sigma{2,y}', 0.6)
+    f2_Beam2.SetParameter('#Sigma_{x}', 0.08)
+    f2_Beam2.SetParameter('#sigma_{1,x}/#sigma{2,x}', 0.75)
+    f2_Beam2.SetParameter('#Sigma_{y}', 0.08)
+    f2_Beam2.SetParameter('#sigma_{1,y}/#sigma{2,y}', 0.65)
 
     f2_Beam2.SetParameter('x_{1}', 0.5)
     f2_Beam2.SetParameter('x_{2}', 0.5)
@@ -128,6 +131,7 @@ if beamType == 'DGX':
     f2_Beam1.SetParameter('S_{y}', 0.5)
     f2_Beam1.SetParameter('#sigma_{xy}', 0.05)
     f2_Beam1.SetParameter('S_{xy}', 1.)
+
     f2_Beam1.SetParameter('x_{1}', 0.5)
     f2_Beam1.SetParameter('x_{2}', 0.5)
     f2_Beam1.SetParameter('y_{1}', 0.5)
@@ -144,6 +148,7 @@ if beamType == 'DGX':
     f2_Beam2.SetParameter('S_{y}', 0.5)
     f2_Beam2.SetParameter('#sigma_{xy}', 0.05)
     f2_Beam2.SetParameter('S_{xy}', 1.)
+
     f2_Beam2.SetParameter('x_{1}', 0.5)
     f2_Beam2.SetParameter('x_{2}', 0.5)
     f2_Beam2.SetParameter('y_{1}', 0.5)
@@ -171,7 +176,7 @@ if beamType == 'SG':
 ### Carry out simulation
 print '\nStarting VdM simulation with {0} throws per scan point'.format(nToys)
 simulator = sim.SimTools(beamType, scanPoints, canvas, plotPath, paramSuffix)
-rates, sigRates, sigDelta, beamSpot, sigBeamSpot, beamWidth = simulator.single_scan_simulator(f2_Beam1, f2_Beam2, nToys)
+rates, sigRates, sigDelta, beamSpot, sigBeamSpot, beamWidth, sigBeamWidth = simulator.single_scan_simulator(f2_Beam1, f2_Beam2, nToys)
 print 'Scan finished!\n'
 
 
@@ -213,10 +218,10 @@ for plane in ['X', 'Y']:
     g_fit.Clear()
     canvas.Clear()
 
-    simulator.draw_beamspot_plots([[x - offset for x in scanPoints], sigDelta[plane]], [beamSpot[plane], sigBeamSpot[plane]], beamWidth[plane], plane)
+    simulator.draw_beamspot_plots([[x - offset for x in scanPoints], sigDelta[plane]], [beamSpot[plane], sigBeamSpot[plane]], [beamWidth[plane], sigBeamWidth[plane]], plane)
     
 # Do 2D VDM fit
-if do2D and 'singleGaussian' in fitTypes:
+if do2D and 'doubleGaussian' in fitTypes:
     graph2D = r.TGraph2DErrors(2*nSPs, array('d', [x - offset for x in scanPoints] + [-0.00001 for n in range(nSPs)]),
                                        array('d', [0.00001 for n in range(nSPs)] + [x - offset for x in scanPoints]), 
                                        array('d', rates['X'] + rates['Y']), array('d', 2*sigDelta['X']), 
@@ -228,17 +233,20 @@ if do2D and 'singleGaussian' in fitTypes:
 
     canvas.Print(plotPath + '/scanPoints_2D_{0}.pdf'.format(paramSuffix))
 
-    fitResult2D = t.Fit2D(graph2D.Clone(), fitGraphs['X'], fitGraphs['Y'], False, 'SIM', \
-                          fitResult['X']['singleGaussian'], fitResult['Y']['singleGaussian'], \
-                          '{0}/fits/fit2D_{1}_{2}'.format(plotPath, '', paramSuffix))
+    fitResult2D = t.Fit2D(graph2D.Clone(), fitGraphs['X'], fitGraphs['Y'], True, 'SIM', \
+                          fitResult['X']['doubleGaussian'], fitResult['Y']['doubleGaussian'], \
+                          '{0}/fits/fit2D_{2}'.format(plotPath, '', paramSuffix))
+
+    fitResult['X']['2D'] = [fitResult2D[0][0]*1000, fitResult2D[2]]
+    fitResult['Y']['2D'] = [fitResult2D[0][2]*1000, fitResult2D[3]]
 
     #graph2D.Clear()
 
-simulator.draw_bias_plots(fitResult, [rates, sigRates], truth, fitTypes)
+simulator.draw_bias_plots(fitResult, [rates, sigRates], truth, fitTypes + ['2D'])
 
 if os.listdir('{0}/fits'.format(plotPath)):
     for fitType in fitTypes:
             subprocess.call('pdftk {0}/fits/fit1D*{1}*.pdf output {0}/fit1D_{1}.pdf'.format(plotPath, fitType), shell = True)
 
-#    if do2D and 'singleGaussian' in fitTypes:
-#        subprocess.call('pdftk {0}/fits/fit2D*.pdf output {0}/fit2D_{1}.pdf'.format(plotPath, paramSuffix), shell = True)
+    if do2D and 'doubleGaussian' in fitTypes:
+        subprocess.call('pdftk {0}/fits/fit2D*.pdf output {0}/fit2D_{1}.pdf'.format(plotPath, paramSuffix), shell = True)
