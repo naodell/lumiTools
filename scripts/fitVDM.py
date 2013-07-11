@@ -281,10 +281,10 @@ def Fit2D(graph2D, graph1DX, graph1DY, doPlot, fill, Results1DX, Results1DY, plo
     f2D.SetParLimits(5, -1.1*meanX, 1.1*meanX)
     f2D.SetParLimits(6, -1.1*meanY, 1.1*meanY)
     f2D.SetParLimits(7, -1.1*meanY, 1.1*meanY)
-    f2D.SetParLimits(8, 0, 1.)
+    f2D.SetParLimits(8, 0., 1.)
     f2D.SetParLimits(9, 0.9*ExpPeak, 1.1*ExpPeak)
     
-    for l in range(5):
+    for l in range(10):
         fit2D = graph2D.Fit("f2D","SQ")
         if fit2D.CovMatrixStatus() == 3 and fit2D.Chi2()/fit2D.Ndf() < 2: break
         

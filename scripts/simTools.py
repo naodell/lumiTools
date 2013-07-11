@@ -30,11 +30,11 @@ def set_graph_style(graph, title = ';x;y',  color = 1, width = 2, mStyle = 21, m
 
 class SimTools():
 
-    def __init__(self, beamType, scanPoints, canvas, plotPath = '', suffix = ''):
+    def __init__(self, beamTypes, scanPoints, canvas, plotPath = '', suffix = ''):
         
         self._suffix        = suffix
         self._plotPath      = plotPath
-        self._beamType      = beamType
+        self._beamTypes     = beamTypes
         self._scanPoints    = scanPoints
         self._nScanPoints   = len(scanPoints)
         self._canvas        = canvas
@@ -62,6 +62,7 @@ class SimTools():
         h2_Overlap.SetLineColor(r.kViolet)
 
         # Outputs for fits
+        truth           = {'X':[], 'Y':[]}
         rates           = {'X':[], 'Y':[]}
         sigRates        = {'X':[], 'Y':[]}
         sigDelta        = {'X':[], 'Y':[]}
@@ -81,38 +82,66 @@ class SimTools():
 
             # center x offset for y scan and vice versa
             if plane == 'Y':
-                if self._beamType == 'SG':
+                if self._beamTypes[0] == 'SG':
+                    f2_Beam1.SetParameter('x_{0}', 0.5)
+                elif self._beamTypes[0] in ['DG', 'DGX']:
+                    f2_Beam1.SetParameter('x_{1}', 0.5)
+                    f2_Beam1.SetParameter('x_{2}', 0.5)
+
+                if self._beamTypes[1] == 'SG':
                     f2_Beam2.SetParameter('x_{0}', 0.5)
-                elif self._beamType in ['DG', 'DGX']:
+                elif self._beamTypes[1] in ['DG', 'DGX']:
                     f2_Beam2.SetParameter('x_{1}', 0.5)
                     f2_Beam2.SetParameter('x_{2}', 0.5)
 
-            if plane == 'X':
-                if self._beamType == 'SG':
+            elif plane == 'X':
+                if self._beamTypes[0] == 'SG':
+                    f2_Beam1.SetParameter('y_{0}', 0.5)
+                elif self._beamTypes[0] in ['DG', 'DGX']:
+                    f2_Beam1.SetParameter('y_{1}', 0.5)
+                    f2_Beam1.SetParameter('y_{2}', 0.5)
+
+                if self._beamTypes[1] == 'SG':
                     f2_Beam2.SetParameter('y_{0}', 0.5)
-                elif self._beamType in ['DG', 'DGX']:
+                elif self._beamTypes[1] in ['DG', 'DGX']:
                     f2_Beam2.SetParameter('y_{1}', 0.5)
                     f2_Beam2.SetParameter('y_{2}', 0.5)
-            
+
             for index,point in enumerate(self._scanPoints):
 
                 #print 'Simulating scan point {} of {}'.format(index + 1, len(self._scanPoints)) 
 
                 # Scan beam 2 w.r.t. beam 1
-                if plane == 'X':
-                    if self._beamType == 'SG':
-                        f2_Beam2.SetParameter('x_{0}', point)
-                    elif self._beamType in ['DG', 'DGX']:
-                        f2_Beam2.SetParameter('x_{1}', point)
-                        f2_Beam2.SetParameter('x_{2}', point)
-                elif plane == 'Y':
-                    if self._beamType == 'SG':
+                if plane == 'Y':
+                    if self._beamTypes[0] == 'SG':
+                        f2_Beam1.SetParameter('y_{0}', self._scanPoints[-(index+1)])
+                    elif self._beamTypes[0] in ['DG', 'DGX']:
+                        f2_Beam1.SetParameter('y_{1}', self._scanPoints[-(index+1)])
+                        f2_Beam1.SetParameter('y_{2}', self._scanPoints[-(index+1)])
+
+                    if self._beamTypes[1] == 'SG':
                         f2_Beam2.SetParameter('y_{0}', point)
-                    elif self._beamType in ['DG', 'DGX']:
+                    elif self._beamTypes[1] in ['DG', 'DGX']:
                         f2_Beam2.SetParameter('y_{1}', point)
                         f2_Beam2.SetParameter('y_{2}', point)
 
+                if plane == 'X':
+                    if self._beamTypes[0] == 'SG':
+                        f2_Beam1.SetParameter('x_{0}', self._scanPoints[-(index+1)])
+                    elif self._beamTypes[0] in ['DG', 'DGX']:
+                        f2_Beam1.SetParameter('x_{1}', self._scanPoints[-(index+1)])
+                        f2_Beam1.SetParameter('x_{2}', self._scanPoints[-(index+1)])
 
+                    if self._beamTypes[1] == 'SG':
+                        f2_Beam2.SetParameter('x_{0}', point)
+                    elif self._beamTypes[1] in ['DG', 'DGX']:
+                        f2_Beam2.SetParameter('x_{1}', point)
+                        f2_Beam2.SetParameter('x_{2}', point)
+
+                # Get beam overlap truth (convolution of beam 1 and 2)
+                f2_Overlap = r.TF2('overlap', 'f2_Beam1*f2_Beam2')
+                truth[plane].append(f2_Overlap.Integral(0., 1., 0., 1.))
+            
                 # Increase beam width as a function of beam
                 # separation (TO DO)
                 #f2_Beam1.SetParameter('#sigma_{x}', 0.)
@@ -156,8 +185,10 @@ class SimTools():
                 # beamspot! 
                 beamWidth[plane]['X'].append(h2_Overlap.GetRMS(1))
                 beamWidth[plane]['Y'].append(h2_Overlap.GetRMS(2))
-                sigBeamWidth[plane]['X'].append(h2_Overlap.GetRMSError(1))
-                sigBeamWidth[plane]['Y'].append(h2_Overlap.GetRMSError(2))
+                sigBeamWidth[plane]['X'].append(0)
+                sigBeamWidth[plane]['Y'].append(0)
+                #sigBeamWidth[plane]['X'].append(h2_Overlap.GetRMSError(1))
+                #sigBeamWidth[plane]['Y'].append(h2_Overlap.GetRMSError(2))
 
                 beamSpot[plane]['X'].append(beamspot[0])
                 beamSpot[plane]['Y'].append(beamspot[1])
@@ -172,52 +203,7 @@ class SimTools():
 
         self._canvas.SetLogz(0)
 
-        return rates, sigRates, sigDelta, beamSpot, sigBeamSpot, beamWidth, sigBeamWidth
-
-    def get_vdm_truth(self, f2_Beam1, f2_Beam2):
-
-        rates       = {'X':[], 'Y':[]}
-
-        for plane in ['X', 'Y']:
-
-            # center x offset for y scan and vice versa
-            if plane == 'Y':
-                if self._beamType == 'SG':
-                    f2_Beam2.SetParameter('x_{0}', 0.5)
-                elif self._beamType in ['DG', 'DGX']:
-                    f2_Beam2.SetParameter('x_{1}', 0.5)
-                    f2_Beam2.SetParameter('x_{2}', 0.5)
-
-            if plane == 'X':
-                if self._beamType == 'SG':
-                    f2_Beam2.SetParameter('y_{0}', 0.5)
-                elif self._beamType in ['DG', 'DGX']:
-                    f2_Beam2.SetParameter('y_{1}', 0.5)
-                    f2_Beam2.SetParameter('y_{2}', 0.5)
-            
-            for index,point in enumerate(self._scanPoints):
-
-                # Scan beam 2 w.r.t. beam 1
-                if plane == 'X':
-                    if self._beamType == 'SG':
-                        f2_Beam2.SetParameter('x_{0}', point)
-                    elif self._beamType in ['DG', 'DGX']:
-                        f2_Beam2.SetParameter('x_{1}', point)
-                        f2_Beam2.SetParameter('x_{2}', point)
-                elif plane == 'Y':
-                    if self._beamType == 'SG':
-                        f2_Beam2.SetParameter('y_{0}', point)
-                    elif self._beamType in ['DG', 'DGX']:
-                        f2_Beam2.SetParameter('y_{1}', point)
-                        f2_Beam2.SetParameter('y_{2}', point)
-
-                # Get beam overlap truth (convolution of beam 1 and 2)
-                f2_Overlap = r.TF2('f2_Overlap', 'f2_Beam1*f2_Beam2')
-                
-                rates[plane].append(f2_Overlap.Integral(0., 1., 0., 1.))
-
-        return rates
-
+        return truth, rates, sigRates, sigDelta, beamSpot, sigBeamSpot, beamWidth, sigBeamWidth
 
     def draw_bias_plots(self, f_fit, simRates, truth, fitTypes):
         
@@ -231,7 +217,7 @@ class SimTools():
             # arbitrary normalization.
             truthScale = sum(simRates[0][plane])/sum(truth[plane])
 
-            scanPoints  = [x - offset for x in self._scanPoints]
+            scanPoints = [x - self._scanPoints[-(i+1)] for i,x in enumerate(self._scanPoints)]
             biasRates   = []
             biasFits    = dict(zip(fitTypes, [[] for i in fitTypes]))
             fitRates    = dict(zip(fitTypes, [[] for i in fitTypes]))
@@ -284,8 +270,7 @@ class SimTools():
             legend.SetFillColor(0)
             legend.SetTextSize(0.045)
 
-            legend.AddEntry(g_truth, 'MC truth ({0})'.format(self._beamType))
-            #legend.AddEntry(f_truth, 'MC truth ({0})'.format(self._beamType))
+            legend.AddEntry(g_truth, 'MC truth ({0[0]}/{0[1]})'.format(self._beamTypes))
             legend.AddEntry(g_rates, 'Simulated rates')
             for fitType in fitTypes:
                 legend.AddEntry(g_fit[fitType], '{0} fit'.format(fitType))
