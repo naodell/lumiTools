@@ -254,33 +254,10 @@ class SimTools():
             meanTrue    = g_truth.GetHistogram().GetMean()
             set_graph_style(g_truth, 'VDM Simulation;#Delta {0};#mu'.format(plane), r.kBlack, 1, 20, 0.8)
 
-            # Get width of truth
             r.gStyle.SetOptFit(0)
 
-            if self._beamType == 'SG':
-                f_truth = r.TF1('f_truth', 'gaus', 0., 1.)
-                f_truth.SetParameters(1., 0.5, 0.05)
-            elif self._beamType == 'DG':
-                f_truth = r.TF1('f_truth','[2]*([3]*exp(-(x-[4])**2/(2*([0]*[1]/([3]*[1]+1-[3]))**2)) + (1-[3])*exp(-(x-[4])**2/(2*([0]/([3]*[1]+1-[3]))**2)))')
-
-                f_truth.SetParNames('#Sigma','#sigma_{1}/#sigma_{2}','Amplitude','Fraction','#mu')
-
-                f_truth.SetParameter(0, 0.5)
-                f_truth.SetParameter(1, 0.5)
-                f_truth.SetParameter(2, 0.001)
-                f_truth.SetParameter(3, 0.7)
-
-                f_truth.SetParLimits(0,0.5*sigmaTrue,2*sigmaTrue)
-                f_truth.SetParLimits(1,0.1,10)
-                f_truth.SetParLimits(2,0.95*peakTrue,1.05*peakTrue)
-                f_truth.SetParLimits(3,0.,0.5)
-
-                f_truth.FixParameter(4, meanTrue)
-
-            #g_truth.Fit('f_truth')
-
             sigmaTruth = sigmaTrue*1000 #f_truth.GetParameter('#Sigma')*1000. 
-
+            
             # Prepare graphs
             g_rates     = r.TGraphErrors(self._nScanPoints, array('f', scanPoints), array('f', simRates[0][plane]), \
                                          array('f', [0.01 for i in range(self._nScanPoints)]), array('f', simRates[1][plane]))
@@ -296,6 +273,10 @@ class SimTools():
                 g_biasFits[fitType]  = r.TGraph(self._nScanPoints, array('f', scanPoints), array('f', biasFits[fitType]))
                 set_graph_style(g_fit[fitType], 'VDM Simulation;#Delta X;#mu', graphStyles[fitType][0], 1, graphStyles[fitType][1], 0.8)
                 set_graph_style(g_biasFits[fitType], ';#Delta X;', graphStyles[fitType][0], 1, graphStyles[fitType][1], 0.8)
+
+                print g_fit[fitType].GetRMS(), fitType
+
+            print sigmaTruth
 
 
             # Build legend
