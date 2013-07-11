@@ -256,41 +256,6 @@ class SimTools():
 
             r.gStyle.SetOptFit(0)
 
-<<<<<<< HEAD
-            if self._beamType == 'SG':
-                f_truth = r.TF1('f_truth', 'gaus', 0., 1.)
-                f_truth.SetParameters(1., 0.5, 0.05)
-            elif self._beamType == 'DG':
-                f_truth = r.TF1('f_truth','[2]*([3]*exp(-(x-[4])**2/(2*([0]*[1]/([3]*[1]+1-[3]))**2)) + (1-[3])*exp(-(x-[4])**2/(2*([0]/([3]*[1]+1-[3]))**2)))')
-
-                f_truth.SetParNames('#Sigma','#sigma_{1}/#sigma_{2}','Amplitude','Fraction','#mu')
-
-                f_truth.SetParameter(0, 0.5)
-                f_truth.SetParameter(1, 0.5)
-                f_truth.SetParameter(2, 0.001)
-                f_truth.SetParameter(3, 0.7)
-
-                f_truth.SetParLimits(0,0.5*sigmaTrue,2*sigmaTrue)
-                f_truth.SetParLimits(1,0.1,10)
-                f_truth.SetParLimits(2,0.95*peakTrue,1.05*peakTrue)
-                f_truth.SetParLimits(3,0.,0.5)
-
-<<<<<<< HEAD
-            g_truth     = r.TGraph(self._nScanPoints, array('f', scanPoints), array('f', truth[plane]))
-            set_graph_style(g_truth, 'VDM Simulation;#Delta {0};#mu'.format(plane), r.kBlack, 1, 20, 0.8)
-
-
-            for j in range(5):
-                fitRes = g_truth.Fit('f_truth','SQ')
-                if fitRes.CovMatrixStatus() == 3 and fitRes.Chi2()/fitRes.Ndf() < 2: break
-=======
-                f_truth.FixParameter(4, meanTrue)
->>>>>>> bde67033a9f42c0b9577cbd677ee828afebb2390
-
-            #g_truth.Fit('f_truth')
-
-=======
->>>>>>> f5d116f7f6f918c08de49fa820de9d9dcc309ab6
             sigmaTruth = sigmaTrue*1000 #f_truth.GetParameter('#Sigma')*1000. 
             
             # Prepare graphs
