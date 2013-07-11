@@ -16,8 +16,14 @@ feed to the vdmCalibrator.
 '''
 
 
-# Configuration
-beamTypes   = ('DG','DG')
+# Configuration:
+
+# beamTypes variable is of the form (beam 1, beam 2); possible choices are 'SG' = single
+# gaussian, 'DG' = double gaussian, and 'DGX' = double gaussian with
+# off-diagonal widths. fitTypes variable can be 'singleGaussian', 'doubleGaussian', or
+# 'skewGaussian'.
+
+beamTypes   = ('SG','SG') 
 fitTypes    = ['singleGaussian', 'doubleGaussian']#, 'skewGaussian']
 do2D        = True
 nToys       = int(1e4)
@@ -75,7 +81,7 @@ if beamTypes[0] == 'SG':
     f2_Beam1.SetParameter('#sigma_{x}', 0.048)
     f2_Beam1.SetParameter('#sigma_{xy}', 0.1)
     f2_Beam1.SetParameter('#sigma_{y}', 0.075)
-    f2_Beam1.SetParameter('xFactor', -0.)
+    f2_Beam1.SetParameter('xFactor', -0.) # Allows mediation of strength of cross-term (0 is off, of course)
 
     f2_Beam1.SetParameter('x_{0}', 0.5)
     f2_Beam1.SetParameter('y_{0}', 0.499)
@@ -122,7 +128,7 @@ if beamTypes[1] == 'SG':
     f2_Beam2.SetParameter('#sigma_{x}', 0.044)
     f2_Beam2.SetParameter('#sigma_{xy}', 0.06)
     f2_Beam2.SetParameter('#sigma_{y}', 0.075)
-    f2_Beam2.SetParameter('xFactor', 0.)
+    f2_Beam2.SetParameter('xFactor', 0.) # Allows mediation of strength of cross-term (0 is off, of course)
 
     f2_Beam2.SetParameter('x_{0}', 0.5)
     f2_Beam2.SetParameter('y_{0}', 0.501)

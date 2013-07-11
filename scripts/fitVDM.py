@@ -282,7 +282,7 @@ def Fit2D(graph2D, graph1DX, graph1DY, doPlot, fill, Results1DX, Results1DY, plo
     f2D.SetParLimits(6, -1.1*meanY, 1.1*meanY)
     f2D.SetParLimits(7, -1.1*meanY, 1.1*meanY)
     f2D.SetParLimits(8, 0., 1.)
-    f2D.SetParLimits(9, 0.9*ExpPeak, 1.1*ExpPeak)
+    #f2D.SetParLimits(9, 0.9*ExpPeak, 1.1*ExpPeak)
     
     for l in range(10):
         fit2D = graph2D.Fit("f2D","SQ")
@@ -293,6 +293,7 @@ def Fit2D(graph2D, graph1DX, graph1DY, doPlot, fill, Results1DX, Results1DY, plo
     f2Dfunc = graph2D.FindObject("f2D")
 
     params = [f2D.GetParameter(i) for i in range(0,10)]
+    parerr = [f2D.GetParError(i) for i in range(0,10)]
 
     xmax = r.TMath.MaxElement(graph1DX.GetN(),graph1DX.GetX())
     ymax = r.TMath.MaxElement(graph1DY.GetN(),graph1DY.GetX())
@@ -313,8 +314,10 @@ def Fit2D(graph2D, graph1DX, graph1DY, doPlot, fill, Results1DX, Results1DY, plo
                          'x_{1}', 'x_{2}', 'y_{1}', 'y_{2}', 'Fraction', 'Amp')
 
     for i in range(0,10):
-        f_ProjX.FixParameter(i, params[i])
-        f_ProjY.FixParameter(i, params[i])
+        f_ProjX.SetParameter(i, params[i])
+        f_ProjX.SetParError(i, parerr[i])
+        f_ProjY.SetParameter(i, params[i])
+        f_ProjY.SetParError(i, parerr[i])
 
     graph1DX.SetTitle('SIM X')
     graph1DX.Fit('f_ProjX', 'SQ')
