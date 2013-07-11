@@ -254,9 +254,9 @@ class SimTools():
             meanTrue    = g_truth.GetHistogram().GetMean()
             set_graph_style(g_truth, 'VDM Simulation;#Delta {0};#mu'.format(plane), r.kBlack, 1, 20, 0.8)
 
-            # Get width of truth
             r.gStyle.SetOptFit(0)
 
+<<<<<<< HEAD
             if self._beamType == 'SG':
                 f_truth = r.TF1('f_truth', 'gaus', 0., 1.)
                 f_truth.SetParameters(1., 0.5, 0.05)
@@ -289,8 +289,10 @@ class SimTools():
 
             #g_truth.Fit('f_truth')
 
+=======
+>>>>>>> f5d116f7f6f918c08de49fa820de9d9dcc309ab6
             sigmaTruth = sigmaTrue*1000 #f_truth.GetParameter('#Sigma')*1000. 
-
+            
             # Prepare graphs
             g_rates     = r.TGraphErrors(self._nScanPoints, array('f', scanPoints), array('f', simRates[0][plane]), \
                                          array('f', [0.01 for i in range(self._nScanPoints)]), array('f', simRates[1][plane]))
@@ -306,6 +308,10 @@ class SimTools():
                 g_biasFits[fitType]  = r.TGraph(self._nScanPoints, array('f', scanPoints), array('f', biasFits[fitType]))
                 set_graph_style(g_fit[fitType], 'VDM Simulation;#Delta X;#mu', graphStyles[fitType][0], 1, graphStyles[fitType][1], 0.8)
                 set_graph_style(g_biasFits[fitType], ';#Delta X;', graphStyles[fitType][0], 1, graphStyles[fitType][1], 0.8)
+
+                print g_fit[fitType].GetRMS(), fitType
+
+            print sigmaTruth
 
 
             # Build legend
