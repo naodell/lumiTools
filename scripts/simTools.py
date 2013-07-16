@@ -36,7 +36,7 @@ class SimTools():
         self._plotPath      = plotPath
         self._beamTypes     = beamTypes
         self._scanPoints    = scanPoints
-        self._nScanPoints   = len(scanPoints)
+        self._nSPs          = len(scanPoints)
         self._canvas        = canvas
 
 
@@ -207,11 +207,7 @@ class SimTools():
 
     def draw_bias_plots(self, f_fit, simRates, truth, fitTypes):
         
-
         for plane in ['X', 'Y']:
-
-            # Set offset fo scanpoints; possibly unnecessary
-            offset = 0.5
 
             # Normalize truth to simulated overlap; should be okay given
             # arbitrary normalization.
@@ -234,7 +230,7 @@ class SimTools():
                     fitRates[fitType].append(fitRate)
 
             # Make graph from generated scan points (truth)
-            g_truth     = r.TGraph(self._nScanPoints, array('f', scanPoints), array('f', truth[plane]))
+            g_truth     = r.TGraph(self._nSPs, array('f', scanPoints), array('f', truth[plane]))
             sigmaTrue   = g_truth.GetRMS()*0.5
             peakTrue    = g_truth.GetHistogram().GetMaximum()
             meanTrue    = g_truth.GetHistogram().GetMean()
@@ -242,12 +238,19 @@ class SimTools():
 
             r.gStyle.SetOptFit(0)
 
+            variance    = 0
+            for i,point in enumerate(scanPoints):
+                print point, truth[plane][i]/peakTrue
+                variance    += pow(point*truth[plane][i]/peakTrue - meanTrue, 2)
+
+            print 1e3*math.sqrt(variance), 1e3*sigmaTrue
+
             sigmaTruth = sigmaTrue*1000 #f_truth.GetParameter('#Sigma')*1000. 
             
             # Prepare graphs
-            g_rates     = r.TGraphErrors(self._nScanPoints, array('f', scanPoints), array('f', simRates[0][plane]), \
-                                         array('f', [0.01 for i in range(self._nScanPoints)]), array('f', simRates[1][plane]))
-            g_biasRates = r.TGraph(self._nScanPoints, array('f', scanPoints), array('f', biasRates))
+            g_rates     = r.TGraphErrors(self._nSPs, array('f', scanPoints), array('f', simRates[0][plane]), \
+                                         array('f', [0.01 for i in range(self._nSPs)]), array('f', simRates[1][plane]))
+            g_biasRates = r.TGraph(self._nSPs, array('f', scanPoints), array('f', biasRates))
 
             set_graph_style(g_rates, 'VDM Simulation;#Delta {0};#mu'.format(plane), r.kBlue, 1, 21, 0.8)
             set_graph_style(g_biasRates, ';#Delta ' + plane + ';(#mu_{truth} - #mu_{#color[2]{fit}||#color[4]{rates}})/#mu_{truth}', r.kBlue, 1, 20, 0.8)
@@ -255,12 +258,12 @@ class SimTools():
             g_fit       = {}
             g_biasFits  = {}
             for i,fitType in enumerate(fitTypes):
-                g_fit[fitType]       = r.TGraph(self._nScanPoints, array('f', scanPoints), array('f', fitRates[fitType]))
-                g_biasFits[fitType]  = r.TGraph(self._nScanPoints, array('f', scanPoints), array('f', biasFits[fitType]))
+                g_fit[fitType]       = r.TGraph(self._nSPs, array('f', scanPoints), array('f', fitRates[fitType]))
+                g_biasFits[fitType]  = r.TGraph(self._nSPs, array('f', scanPoints), array('f', biasFits[fitType]))
                 set_graph_style(g_fit[fitType], 'VDM Simulation;#Delta X;#mu', graphStyles[fitType][0], 1, graphStyles[fitType][1], 0.8)
                 set_graph_style(g_biasFits[fitType], ';#Delta X;', graphStyles[fitType][0], 1, graphStyles[fitType][1], 0.8)
 
-                print g_fit[fitType].GetRMS(), fitType
+                print 500*g_fit[fitType].GetRMS(), fitType
 
             print sigmaTruth
 

@@ -152,7 +152,7 @@ def Plot(graph,f,fitType,fill,scanNumber,plotName):
 
 def Fit(graph, fitType, doPlot, fill, scanNumber, plotName = 'test'):
 
-        # pre guess the fit parameters
+        # Use distribution parameters for the fit parameter ansatz
         ExpSigma    = graph.GetRMS()*0.5
         ExpPeak     = graph.GetHistogram().GetMaximum()
         ExpMean     = graph.GetHistogram().GetMean()
