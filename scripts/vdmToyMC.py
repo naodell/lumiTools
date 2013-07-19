@@ -23,7 +23,7 @@ feed to the vdmCalibrator.
 # off-diagonal widths. fitTypes variable can be 'singleGaussian', 'doubleGaussian', or
 # 'skewGaussian'.
 
-beamTypes   = ('SG','DG') 
+beamTypes   = ('DG','DG') 
 fitTypes    = ['singleGaussian', 'doubleGaussian']#, 'skewGaussian']
 do2D        = True
 nToys       = int(1e4)
