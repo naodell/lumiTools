@@ -26,7 +26,7 @@ feed to the vdmCalibrator.
 beamTypes   = ('SG','SG') 
 fitTypes    = ['singleGaussian', 'doubleGaussian']#, 'skewGaussian']
 do2D        = True
-nToys       = int(1e4)
+nToys       = int(1e5)
 nSPs        = 25
 scanRange   = (0.3, 0.7) # Should be within [0, 1]
 scanPoints  = [scanRange[0] + (scanRange[1] - scanRange[0])*i/float(nSPs) for i in range(nSPs)]
