@@ -1,12 +1,14 @@
 #! /usr/bin/env python
 import sys, os, subprocess, math
 from array import array
+from multiprocessing import Process, Queue
 import ROOT as r
 import fitVDM as t
 import simTools as sim
 import lumiTools as l
 
 r.gROOT.SetBatch()
+doTest = False
 
 '''
 Simple toy MC to produce VdM scan distibutions.  First,
@@ -26,7 +28,8 @@ feed to the vdmCalibrator.
 beamTypes   = ('DG','DG') 
 fitTypes    = ['singleGaussian', 'doubleGaussian']#, 'skewGaussian']
 do2D        = True
-nToys       = int(1e5)
+nThrows     = int(1e4)
+nToys       = 50
 nSPs        = 25
 scanRange   = (0.3, 0.7) # Should be within [0, 1]
 scanPoints  = [scanRange[0] + (scanRange[1] - scanRange[0])*i/float(nSPs) for i in range(nSPs)]
@@ -44,7 +47,7 @@ r.gRandom.SetSeed(0)
 
 # Command line arguments
 if len(sys.argv) > 1:
-    nToys = int(sys.argv[1])
+    nThrows = int(sys.argv[1])
 
 # Prepare output
 canvas      = r.TCanvas('canvas', 'canvas', 700, 600)
@@ -73,12 +76,15 @@ f2_DGX  = r.TF2('DoubleGaussX', '[8]*exp(-(x-[4])**2/(2*[0]**2) + (x-[4])*(y-[6]
 # to contain the beams (or at least, the overlap)
 # to well within this range.
 
+##############
 ### BEAM 1 ###
+##############
+
 if beamTypes[0] == 'SG':
     f2_Beam1 = r.TF2('f2_Beam1', 'SingleGauss')
     f2_Beam1.SetParNames('x_{0}', 'y_{0}', '#sigma_{x}','#sigma_{xy}','#sigma_{y}', 'xFactor')
 
-    f2_Beam1.SetParameter('#sigma_{x}', 0.048)
+    f2_Beam1.SetParameter('#sigma_{x}', 0.04)
     f2_Beam1.SetParameter('#sigma_{xy}', 0.1)
     f2_Beam1.SetParameter('#sigma_{y}', 0.075)
     f2_Beam1.SetParameter('xFactor', -0.) # Allows mediation of strength of cross-term (0 is off, of course)
@@ -120,14 +126,17 @@ elif beamTypes[0] == 'DGX':
     f2_Beam1.SetParameter('Fraction', 1.)
     
 
+##############
 ### BEAM 2 ###
+##############
+
 if beamTypes[1] == 'SG':
     f2_Beam2 = r.TF2('f2_Beam2', 'SingleGauss') 
     f2_Beam2.SetParNames('x_{0}', 'y_{0}', '#sigma_{x}','#sigma_{xy}','#sigma_{y}', 'xFactor')
 
-    f2_Beam2.SetParameter('#sigma_{x}', 0.044)
+    f2_Beam2.SetParameter('#sigma_{x}', 0.05)
     f2_Beam2.SetParameter('#sigma_{xy}', 0.06)
-    f2_Beam2.SetParameter('#sigma_{y}', 0.075)
+    f2_Beam2.SetParameter('#sigma_{y}', 0.065)
     f2_Beam2.SetParameter('xFactor', 0.) # Allows mediation of strength of cross-term (0 is off, of course)
 
     f2_Beam2.SetParameter('x_{0}', 0.5)
@@ -177,6 +186,13 @@ f2_Beam2.SetTitle('Beam 2 PDF;;')
 f2_Beam2.Draw('surf1')
 canvas.Print(plotPath + '/beam2_shape.pdf')
 
+### "Convolve" beam 1 and 2 functions to get overlap truth
+f2_Overlap = r.TF2('f2_Overlap', 'f2_Beam1*f2_Beam2')
+f2_Overlap.SetTitle('Beam overlap (head-on);;')
+f2_Overlap.Draw('surf1')
+canvas.Print('{0}/overlap_shape.pdf'.format(plotPath))
+
+
 sigma = {}
 if beamTypes[0] == 'SG':
     sigX = [f2_Beam1.GetParameter('#sigma_{x}'),f2_Beam1.GetParameter('#sigma_{x}')]
@@ -186,80 +202,163 @@ if beamTypes[0] == 'SG':
 
 
 ### Carry out simulation
-print '\nStarting VdM simulation with {0} throws per scan point'.format(nToys)
+print '\nStarting VdM simulation with {0} throws per scan point'.format(nThrows)
+
+### multiprocessing test area ###
+if doTest:
+    def mc_test(queue, simbot, beam1, beam2, nThrows):
+        queue.put(simbot.single_scan_simulator(beam1, beam2, nThrows))
+
+    resultQueue = Queue()
+    jobs        = [Process(target = mc_test, args = (resultQueue, simulator, f2_Beam1, f2_Beam2, nThrows,)) for i in range(nToys)]
+    for job in jobs: job.start()
+    for job in jobs: job.join()
+    results     = [resultQueue.get() for i in range(nToys)]
+
+    for result in results:
+        print result[1]
+
+    exit()
+##################################
+
 simulator = sim.SimTools(beamTypes, scanPoints, canvas, plotPath, paramSuffix)
-truth, rates, sigRates, sigDelta, beamSpot, sigBeamSpot, beamWidth, sigBeamWidth = simulator.single_scan_simulator(f2_Beam1, f2_Beam2, nToys)
+
+#truth, rates, sigRates, sigDelta, beamSpot, sigBeamSpot, beamWidth, sigBeamWidth = simulator.single_scan_simulator(f2_Beam1, f2_Beam2, nThrows)
+
+results = []
+for i in range(nToys):
+    results.append(simulator.single_scan_simulator(f2_Beam1, f2_Beam2, nThrows))
+
 print 'Scan finished!\n'
 
-### Convolve beam 1 and 2 functions to get overlap truth
-f2_Overlap = r.TF2('f2_Overlap', 'f2_Beam1*f2_Beam2')
-f2_Overlap.SetTitle('Beam overlap (head-on);;')
-f2_Overlap.Draw('surf1')
-canvas.Print('{0}/overlap_shape.pdf'.format(plotPath))
-
+### Make directory structure ###
 if not os.path.exists('{0}/fits'.format(plotPath)):
     os.makedirs('{0}/fits'.format(plotPath))
 else:
     if os.listdir('{0}/fits'.format(plotPath)):
         subprocess.call('rm {0}/fits/*pdf'.format(plotPath), shell = True)
 
-# Print rates
-fitGraphs   = {}
-fitResult   = {'X':{}, 'Y':{}}
+if not os.path.exists('{0}/scanPoints'.format(plotPath)):
+    os.makedirs('{0}/scanPoints'.format(plotPath))
+else:
+    if os.listdir('{0}/fits'.format(plotPath)):
+        subprocess.call('rm {0}/scanPoints/*pdf'.format(plotPath), shell = True)
 
-diffPoints = [x - scanPoints[-(i+1)] for i,x in enumerate(scanPoints)]
+if not os.path.exists('{0}/biasPlots'.format(plotPath)):
+    os.makedirs('{0}/biasPlots'.format(plotPath))
+else:
+    if os.listdir('{0}/biasPlots'.format(plotPath)):
+        subprocess.call('rm {0}/biasPlots/*pdf'.format(plotPath), shell = True)
 
-# Do 1D VDM fit 
-for plane in ['X', 'Y']:
 
-    offset = 0.5
+biases = []
 
-    # Fit simulated rates
-    g_fit = r.TGraphErrors(nSPs, array('f', diffPoints), array('f', rates[plane]), array('f', sigDelta[plane]), array('f', sigRates[plane]))
-    g_fit.SetTitle('VdM scan ' + plane + ' sim;#Delta' + plane + ' (a.u.);')
-    g_fit.Draw('AP')
+# Print Carry out fits
+for i in range(nToys):
 
-    canvas.Print(plotPath + '/scanPoints_{0}_{1}.pdf'.format(plane, paramSuffix))
+    (truth, rates, sigRates, sigDelta, beamSpot, sigBeamSpot, beamWidth, sigBeamWidth) = results[i] 
 
-    fitGraphs[plane] = g_fit
+    fitGraphs   = {}
+    fitResult   = {'X':{}, 'Y':{}}
 
-    for fitType in fitTypes:
-        fitResult[plane][fitType] = t.Fit(g_fit.Clone(), fitType, True, 'SIM', '---', '{0}/fits/fit1D_{1}_{2}_{3}'.format(plotPath, plane, fitType, paramSuffix))
+    diffPoints = [x - scanPoints[-(j+1)] for j,x in enumerate(scanPoints)]
 
-    g_fit.Clear()
-    canvas.Clear()
+    # Do 1D VDM fit 
+    for plane in ['X', 'Y']:
 
-    simulator.draw_beamspot_plots([diffPoints, sigDelta[plane]], [beamSpot[plane], sigBeamSpot[plane]], [beamWidth[plane], sigBeamWidth[plane]], plane)
-    
-# Do 2D VDM fit
-if do2D and 'doubleGaussian' in fitTypes:
-    graph2D = r.TGraph2DErrors(2*nSPs, array('d', diffPoints + [-0.00001 for n in range(nSPs)]),
-                                       array('d', [0.00001 for n in range(nSPs)] + diffPoints), 
-                                       array('d', rates['X'] + rates['Y']), array('d', 2*sigDelta['X']), 
-                                       array('d', 2*sigDelta['Y']), array('d', sigRates['X'] + sigRates['Y']))
+        offset = 0.5
 
-    graph2D.SetMarkerStyle(21)
-    graph2D.SetTitle('Simulated scan points;#Delta X;#Delta Y')
-    graph2D.Draw('P0')
+        # Fit simulated rates
+        g_fit = r.TGraphErrors(nSPs, array('f', diffPoints), array('f', rates[plane]), array('f', sigDelta[plane]), array('f', sigRates[plane]))
+        g_fit.SetTitle('VdM scan ' + plane + ' sim;#Delta' + plane + ' (a.u.);')
+        g_fit.Draw('AP')
 
-    canvas.Print(plotPath + '/scanPoints_2D_{0}.pdf'.format(paramSuffix))
+        canvas.Print(plotPath + '/scanPoints/1D_{0}_{1}_{2}.pdf'.format(plane, paramSuffix, i+1))
 
-    fitResult2D = t.Fit2D(graph2D.Clone(), fitGraphs['X'], fitGraphs['Y'], True, 'SIM', \
-                          fitResult['X']['doubleGaussian'], fitResult['Y']['doubleGaussian'], \
-                          '{0}/fits/fit2D_{2}'.format(plotPath, '', paramSuffix))
+        fitGraphs[plane] = g_fit
 
-    fitResult['X']['2D'] = [fitResult2D[0][0]*1000, fitResult2D[2]]
-    fitResult['Y']['2D'] = [fitResult2D[0][2]*1000, fitResult2D[3]]
+        for fitType in fitTypes:
+            fitResult[plane][fitType] = t.Fit(g_fit.Clone(), fitType, True, 'SIM', '---', '{0}/fits/fit1D_{1}_{2}_{3}_{4}'.format(plotPath, plane, fitType, paramSuffix, i+1))
 
+        g_fit.Clear()
+        canvas.Clear()
+
+        simulator.draw_beamspot_plots([diffPoints, sigDelta[plane]], [beamSpot[plane], sigBeamSpot[plane]], [beamWidth[plane], sigBeamWidth[plane]], plane)
+        
+    # Do 2D VDM fit
+    graph2D = []
+    if do2D and 'doubleGaussian' in fitTypes:
+        graph2D.append(r.TGraph2DErrors(2*nSPs, array('d', diffPoints + [-0.00001 for n in range(nSPs)]),
+                                           array('d', [0.00001 for n in range(nSPs)] + diffPoints), 
+                                           array('d', rates['X'] + rates['Y']), array('d', 2*sigDelta['X']), 
+                                           array('d', 2*sigDelta['Y']), array('d', sigRates['X'] + sigRates['Y'])))
+
+        graph2D[0].SetMarkerStyle(21)
+        graph2D[0].SetTitle('Simulated scan points;#Delta X;#Delta Y')
+        graph2D[0].Draw('P0')
+
+        canvas.Print(plotPath + '/scanPoints/2D_{0}_{1}.pdf'.format(paramSuffix, i+1))
+
+        fitResult2D = t.Fit2D(graph2D[0].Clone(), fitGraphs['X'], fitGraphs['Y'], True, 'SIM', \
+                              fitResult['X']['doubleGaussian'], fitResult['Y']['doubleGaussian'], \
+                              '{0}/fits/fit2D_{2}_{3}'.format(plotPath, '', paramSuffix, i+1))
+
+        fitResult['X']['2D'] = [fitResult2D[0][0]*1000, fitResult2D[2]]
+        fitResult['Y']['2D'] = [fitResult2D[0][2]*1000, fitResult2D[3]]
+
+    biases.append(simulator.draw_bias_plots(fitResult, [rates, sigRates], truth, fitTypes + ['2D'], i))
+
+styles = {'singleGaussian':[r.kRed, 23], 'doubleGaussian':[r.kCyan+2, 22], 'skewGaussian':[r.kGreen-2, 24], '2D':[r.kViolet, 25]}
+
+if do2D:
     fitTypes.append('2D')
-    #graph2D.Clear()
 
-simulator.draw_bias_plots(fitResult, [rates, sigRates], truth, fitTypes)
+for plane in ['X', 'Y']:
+    biasHists = {}
+    for fitType in fitTypes:
+        hist = r.TH1F('h_bias_{0}'.format(fitType), 'fit biases (scan {0});bias;nToys'.format(plane), 50, -0.1, 0.1)
+        hist.SetFillColor(0)
+        hist.SetFillStyle(0)
+        hist.SetLineColor(styles[fitType][0])
+        hist.SetLineWidth(2)
+
+        biasHists[fitType] = hist
+
+    hMax = 0
+    for bias in biases:
+        for fitType in fitTypes:
+            biasHists[fitType].Fill(bias[plane][fitType])
+            
+            histMax = biasHists[fitType].GetMaximum()
+            if hMax < histMax:
+                hMax = histMax
+        
+    legend = r.TLegend(0.6,0.78,0.95,0.94)
+    legend.SetFillColor(0)
+    legend.SetTextSize(0.045)
+
+    for i,fitType in enumerate(fitTypes):
+        legend.AddEntry(biasHists[fitType], '{0}'.format(fitType))
+        if i is 0:
+            biasHists[fitType].SetMaximum(1.1*hMax)
+            biasHists[fitType].Draw('')
+        else:
+            biasHists[fitType].Draw('SAME')
+    legend.Draw()
+
+    canvas.Print('{0}/bias_{1}.pdf'.format(plotPath, plane))
+
 
 if os.listdir('{0}/fits'.format(plotPath)):
     for fitType in fitTypes:
         if fitType == '2D':
             subprocess.call('pdftk {0}/fits/fit2D*.pdf output {0}/fit2D_{1}.pdf'.format(plotPath, paramSuffix), shell = True)
+            subprocess.call('pdftk {0}/scanPoints/2D*.pdf output {0}/scanPoints2D_{1}.pdf'.format(plotPath, paramSuffix), shell = True)
         else:
             subprocess.call('pdftk {0}/fits/fit1D*{1}*.pdf output {0}/fit1D_{1}.pdf'.format(plotPath, fitType), shell = True)
+            subprocess.call('pdftk {0}/scanPoints/1D*.pdf output {0}/scanPoints1D_{1}.pdf'.format(plotPath, paramSuffix), shell = True)
+
+        subprocess.call('pdftk {0}/biasPlots/X_*.pdf output {0}/biasPlots_X.pdf'.format(plotPath, paramSuffix), shell = True)
+        subprocess.call('pdftk {0}/biasPlots/Y_*.pdf output {0}/biasPlots_Y.pdf'.format(plotPath, paramSuffix), shell = True)
+
 

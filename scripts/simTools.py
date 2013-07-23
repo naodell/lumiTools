@@ -52,14 +52,14 @@ class SimTools():
         h2_Overlap  = r.TH2D('h2_Overlap', 'beam1/2 overlap;x;y', 100, 0., 1., 100, 0., 1.)
 
         # Set histogram styles 
-        h2_Beam1.SetMarkerColor(r.kBlue)
-        h2_Beam1.SetFillColor(r.kBlue)
-        h2_Beam1.SetLineColor(r.kBlue)
-        h2_Beam2.SetMarkerColor(r.kRed)
-        h2_Beam2.SetFillColor(r.kRed)
-        h2_Beam2.SetLineColor(r.kRed)
-        h2_Overlap.SetMarkerColor(r.kViolet)
-        h2_Overlap.SetLineColor(r.kViolet)
+        #h2_Beam1.SetMarkerColor(r.kBlue)
+        #h2_Beam1.SetFillColor(r.kBlue)
+        #h2_Beam1.SetLineColor(r.kBlue)
+        #h2_Beam2.SetMarkerColor(r.kRed)
+        #h2_Beam2.SetFillColor(r.kRed)
+        #h2_Beam2.SetLineColor(r.kRed)
+        #h2_Overlap.SetMarkerColor(r.kViolet)
+        #h2_Overlap.SetLineColor(r.kViolet)
 
         # Outputs for fits
         truth           = {'X':[], 'Y':[]}
@@ -160,12 +160,12 @@ class SimTools():
                 h2_Overlap.Multiply(h2_Beam1, h2_Beam2)
 
                 h2_Overlap.SetMaximum(5*nToys)
-                h2_Overlap.Draw('COLZ')
-                h2_Beam1.Draw('HIST SAME')
-                h2_Beam2.Draw('HIST SAME')
+                #h2_Overlap.Draw('COLZ')    # Turning these off for multithreading tests
+                #h2_Beam1.Draw('HIST SAME')
+                #h2_Beam2.Draw('HIST SAME')
 
                 #self._canvas.Print(self._plotPath + '/vdmScan_MC_' + plane + '.pdf')
-                self._canvas.Print(self._plotPath + '/vdmScan_MC_' + plane + '.gif+10')
+                #self._canvas.Print(self._plotPath + '/vdmScan_MC_' + plane + '.gif+10')
 
                 # Normalize overlap histogram to represent 
                 # probability given by overlap of beam shapes
@@ -203,10 +203,11 @@ class SimTools():
 
         self._canvas.SetLogz(0)
 
-        return truth, rates, sigRates, sigDelta, beamSpot, sigBeamSpot, beamWidth, sigBeamWidth
+        return (truth, rates, sigRates, sigDelta, beamSpot, sigBeamSpot, beamWidth, sigBeamWidth)
 
-    def draw_bias_plots(self, f_fit, simRates, truth, fitTypes):
+    def draw_bias_plots(self, f_fit, simRates, truth, fitTypes, count):
         
+        biases = {'X': {}, 'Y':{}}
         for plane in ['X', 'Y']:
 
             # Normalize truth to simulated overlap; should be okay given
@@ -258,9 +259,11 @@ class SimTools():
                 g_biasFits[fitType]  = r.TGraph(self._nSPs, array('f', scanPoints), array('f', biasFits[fitType]))
                 set_graph_style(g_fit[fitType], 'VDM Simulation;#Delta X;#mu', graphStyles[fitType][0], 1, graphStyles[fitType][1], 0.8)
                 set_graph_style(g_biasFits[fitType], ';#Delta X;', graphStyles[fitType][0], 1, graphStyles[fitType][1], 0.8)
-                print 'Sigma ({0}) = {1:.2f}'.format(fitType, f_fit[plane][fitType][0])
 
-            print 'Sigma ({0}) = {1:.2f}'.format('truth', sigmaTruth)
+                biases[plane][fitType] = (sigmaTruth - f_fit[plane][fitType][0])/sigmaTruth
+                #print 'Sigma ({0}) = {1:.2f}'.format(fitType, f_fit[plane][fitType][0])
+
+            #print 'Sigma ({0}) = {1:.2f}'.format('truth', sigmaTruth)
 
 
             # Build legend
@@ -281,7 +284,7 @@ class SimTools():
             textBox.SetLineColor(0)
             textBox.SetTextSize(0.05)
             for fitType in fitTypes:
-                textBox.AddText('#color[{0}]{{#Delta#Sigma/#Sigma_{{truth}} = {1:.3f}}}'.format(g_fit[fitType].GetLineColor(), abs(sigmaTruth-f_fit[plane][fitType][0])/sigmaTruth))
+                textBox.AddText('#color[{0}]{{#Delta#Sigma/#Sigma_{{truth}} = {1:.3f}}}'.format(g_fit[fitType].GetLineColor(), (sigmaTruth-f_fit[plane][fitType][0])/sigmaTruth))
 
             
             # Set up canvas for displaying inputs and bias metrics
@@ -328,10 +331,12 @@ class SimTools():
             for fitType in fitTypes:
                 g_biasFits[fitType].Draw('CP SAME')
 
-            self._canvas.Print('{0}/bias_{1}_{2}.pdf'.format(self._plotPath, plane, self._suffix))
+            self._canvas.Print('{0}/biasPlots/{1}_{2}_{3}.pdf'.format(self._plotPath, plane, self._suffix, count+1))
 
             pad1.Delete()
             pad2.Delete()
+
+        return biases
 
     def draw_beamspot_plots(self, scanPoints, beamspot, beamWidth, plane):
         '''
