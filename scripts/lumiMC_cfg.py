@@ -12,12 +12,15 @@ algos = ['OR', 'XOR+', 'XOR-', 'AND']
 doEff       = True
 nOrbits     = 1000
 timeStep    = 25
+
 #probs       = [0.06, 0.06, 0.085, 0.083, 0.115, 0.095, 0.075, 0.095]
 probs       = [0.06, 0.06, 0.085, 0.083, 0.115, 0.095, 0.075, 0.0]
 probScale   = 1.
+
 #fillPattern = l.get_fill_pattern('1000ns_50b_35_14_35')
 #fillPattern = l.get_fill_pattern('50ns_840b_807_0_816_108bpi12inj')
 fillPattern = l.get_fill_pattern('50ns_1380b_1331_0_1320_144bpi12inj')
+
 bpo         = len(fillPattern)
 
 ### Initialize histograms, etc. ###
