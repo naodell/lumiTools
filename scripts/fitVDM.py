@@ -299,21 +299,22 @@ def Fit2D(graph2D, graph1DX, graph1DY, doPlot, fill, Results1DX, Results1DY, plo
     ymax = r.TMath.MaxElement(graph1DY.GetN(),graph1DY.GetX())
 
     f_ProjX = r.TF1('f_ProjX','[9]*([8]*exp(-(x - [4])**2/(2*([0]*[1]/(1 + [8]*([1] - 1)))**2) \
-                                        - ([6])**2/(2*([2]*[3]/(1 + [8]*([3] - 1)))**2)) \
+                                        - [6]**2/(2*([2]*[3]/(1 + [8]*([3] - 1)))**2)) \
                                         + (1 - [8])*exp(-(x-[5])**2/(2*([0]/(1 + [8]*([1] - 1)))**2) \
                                         - ([7])**2/(2*([2]/(1 + [8]*([3] - 1)))**2)))', -0.5, 0.5)
 
     f_ProjX.SetParNames('#Sigma_{x}', '#sigma_{1,x}/#sigma_{2,x}', '#Sigma_{y}', '#sigma_{1,y}/#sigma_{2,y}',\
                          'x_{1}', 'x_{2}', 'y_{1}', 'y_{2}', 'Fraction', 'Amp')
 
-    f_ProjY = r.TF1('f_ProjY','[9]*([8]*exp(-([4])**2/(2*([0]*[1]/(1 + [8]*([1] - 1)))**2) \
+    f_ProjY = r.TF1('f_ProjY','[9]*([8]*exp(-[4]**2/(2*([0]*[1]/(1 + [8]*([1] - 1)))**2) \
                                         - (x - [6])**2/(2*([2]*[3]/(1 + [8]*([3] - 1)))**2)) \
-                                        + (1 - [8])*exp(-([5])**2/(2*([0]/(1 + [8]*([1] - 1)))**2) \
+                                        + (1 - [8])*exp(-[5]**2/(2*([0]/(1 + [8]*([1] - 1)))**2) \
                                         - (x - [7])**2/(2*([2]/(1 + [8]*([3] - 1)))**2)))', -0.5, 0.5)
     f_ProjY.SetParNames('#Sigma_{x}', '#sigma_{1,x}/#sigma_{2,x}', '#Sigma_{y}', '#sigma_{1,y}/#sigma_{2,y}',\
                          'x_{1}', 'x_{2}', 'y_{1}', 'y_{2}', 'Fraction', 'Amp')
 
     for i in range(0,10):
+        print params[i]
         f_ProjX.SetParameter(i, params[i])
         f_ProjX.SetParError(i, parerr[i])
         f_ProjY.SetParameter(i, params[i])
